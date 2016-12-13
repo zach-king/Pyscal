@@ -1,8 +1,10 @@
+import string
+
 # Token types
 #
 # EOF (end-of-file) token is used to indicate that 
 # there is no more input left for lexical analysis
-INTEGER, PLUS, EOF = 'INTEGER', 'PLUS', 'EOF'
+INTEGER, PLUS, WHITESPACE, EOF = 'INTEGER', 'PLUS', 'WHITESPACE', 'EOF'
 
 
 class Token(object):
@@ -76,6 +78,11 @@ class Interpreter(object):
             self.pos += 1
             return token
 
+        if current_char in string.whitespace:
+            self.pos += 1
+            token = self.get_next_token()
+            return token
+
         # Parsing error otherwise
         self.error()
 
@@ -84,7 +91,7 @@ class Interpreter(object):
         # type and if they match then "eat" the current token 
         # and assign the next token to the self.current_token,
         # otherwise raise an exception
-        if self.current_token.type == token_type:
+        if self.current_token.type == token_type or self.current_token == WHITESPACE:
             self.current_token = self.get_next_token()
         else:
             self.error()
