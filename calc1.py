@@ -4,7 +4,7 @@ import string
 #
 # EOF (end-of-file) token is used to indicate that 
 # there is no more input left for lexical analysis
-INTEGER, PLUS, WHITESPACE, EOF = 'INTEGER', 'PLUS', 'WHITESPACE', 'EOF'
+INTEGER, PLUS, EOF = 'INTEGER', 'PLUS', 'EOF'
 
 
 class Token(object):
@@ -69,8 +69,20 @@ class Interpreter(object):
         # to point to the next character after the digit, 
         # and return the INTEGER token
         if current_char.isdigit():
-            token = Token(INTEGER, int(current_char))
-            self.pos += 1
+            # To support multi-digit integers, I use a while loop 
+            # that continually reads the next character and checks 
+            # if it is a digit. If so, shift our value by 10 and add the new digit
+            value = 0
+            while current_char.isdigit():
+                value = (value * 10) + int(current_char)
+                self.pos += 1
+                # In case we reach the end of the line
+                if self.pos > len(text) - 1:
+                    break
+                current_char = text[self.pos]
+
+            # Now construct the token with the overall value, and return it
+            token = Token(INTEGER, value)
             return token
 
         if current_char == '+':
@@ -78,6 +90,7 @@ class Interpreter(object):
             self.pos += 1
             return token
 
+        # Skip whitespace characters
         if current_char in string.whitespace:
             self.pos += 1
             token = self.get_next_token()
@@ -91,7 +104,7 @@ class Interpreter(object):
         # type and if they match then "eat" the current token 
         # and assign the next token to the self.current_token,
         # otherwise raise an exception
-        if self.current_token.type == token_type or self.current_token == WHITESPACE:
+        if self.current_token.type == token_type:
             self.current_token = self.get_next_token()
         else:
             self.error()
