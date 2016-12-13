@@ -4,7 +4,7 @@ import string
 #
 # EOF (end-of-file) token is used to indicate that 
 # there is no more input left for lexical analysis
-INTEGER, PLUS, EOF = 'INTEGER', 'PLUS', 'EOF'
+INTEGER, PLUS, MINUS, EOF = 'INTEGER', 'PLUS', 'MINUS', 'EOF'
 
 
 class Token(object):
@@ -90,6 +90,11 @@ class Interpreter(object):
             self.pos += 1
             return token
 
+        if current_char == '-':
+            token = Token(MINUS, current_char)
+            self.pos += 1
+            return token
+
         # Skip whitespace characters
         if current_char in string.whitespace:
             self.pos += 1
@@ -118,9 +123,14 @@ class Interpreter(object):
         left = self.current_token
         self.eat(INTEGER)
 
-        # We expect the current token to be a '+' token
+        # We expect the current token to be a '+' or '-' Token
+        adding = True
         op = self.current_token
-        self.eat(PLUS)
+        try:
+            self.eat(PLUS)
+        except:
+            adding = False
+            self.eat(MINUS)
 
         # We expect the current token to be a single-digit integer
         right = self.current_token
@@ -132,7 +142,10 @@ class Interpreter(object):
         # has been successfully found and the method can just 
         # return the result of adding two integers, thus 
         # effectively interpreting the client input
-        result = left.value + right.value
+        if adding:
+            result = left.value + right.value
+        else:
+            result = left.value - right.value
         return result
 
 
