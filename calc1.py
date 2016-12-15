@@ -1,8 +1,10 @@
+import string
+
 # Token types
 #
 # EOF (end-of-file) token is used to indicate that 
 # there is no more input left for lexical analysis
-INTEGER, PLUS, EOF = 'INTEGER', 'PLUS', 'EOF'
+INTEGER, PLUS, MINUS, EOF = 'INTEGER', 'PLUS', 'MINUS', 'EOF'
 
 
 class Token(object):
@@ -67,13 +69,36 @@ class Interpreter(object):
         # to point to the next character after the digit, 
         # and return the INTEGER token
         if current_char.isdigit():
-            token = Token(INTEGER, int(current_char))
-            self.pos += 1
+            # To support multi-digit integers, I use a while loop 
+            # that continually reads the next character and checks 
+            # if it is a digit. If so, shift our value by 10 and add the new digit
+            value = 0
+            while current_char.isdigit():
+                value = (value * 10) + int(current_char)
+                self.pos += 1
+                # In case we reach the end of the line
+                if self.pos > len(text) - 1:
+                    break
+                current_char = text[self.pos]
+
+            # Now construct the token with the overall value, and return it
+            token = Token(INTEGER, value)
             return token
 
         if current_char == '+':
             token = Token(PLUS, current_char)
             self.pos += 1
+            return token
+
+        if current_char == '-':
+            token = Token(MINUS, current_char)
+            self.pos += 1
+            return token
+
+        # Skip whitespace characters
+        if current_char in string.whitespace:
+            self.pos += 1
+            token = self.get_next_token()
             return token
 
         # Parsing error otherwise
@@ -98,9 +123,14 @@ class Interpreter(object):
         left = self.current_token
         self.eat(INTEGER)
 
-        # We expect the current token to be a '+' token
+        # We expect the current token to be a '+' or '-' Token
+        adding = True
         op = self.current_token
-        self.eat(PLUS)
+        try:
+            self.eat(PLUS)
+        except:
+            adding = False
+            self.eat(MINUS)
 
         # We expect the current token to be a single-digit integer
         right = self.current_token
@@ -112,7 +142,10 @@ class Interpreter(object):
         # has been successfully found and the method can just 
         # return the result of adding two integers, thus 
         # effectively interpreting the client input
-        result = left.value + right.value
+        if adding:
+            result = left.value + right.value
+        else:
+            result = left.value - right.value
         return result
 
 
